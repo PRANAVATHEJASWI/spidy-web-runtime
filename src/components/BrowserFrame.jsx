@@ -11,6 +11,8 @@ export default function BrowserFrame({
 }) {
   const { name = '', title = '', description = '', askMrNoob = null } = resumeData;
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const liveSiteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://pranavathejaswi.dev';
+  const editorUrl = `${liveSiteUrl}/editor`;
 
   const handleNameChange = (val) => {
     onChange({ ...resumeData, name: val });
@@ -36,7 +38,7 @@ export default function BrowserFrame({
         </div>
         
         <div className="browser-address-bar mono">
-          {isEditorPage ? 'https://pranavathejaswi.dev/editor' : 'https://pranavathejaswi.dev'}
+          {isEditorPage ? editorUrl : liveSiteUrl}
         </div>
         
         {/* Hamburger Expand Button */}

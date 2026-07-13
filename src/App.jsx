@@ -7,6 +7,8 @@ import ResumeCard from './components/ResumeCard';
 import SkillsGrid from './components/SkillsGrid';
 
 export default function App() {
+  const apiBase = (import.meta.env.VITE_API_URL || 'https://spidy-web-backend.onrender.com').replace(/\/$/, '');
+  const apiUrl = (path) => `${apiBase}${path}`;
   const [activeTab, setActiveTab] = useState('portfolio'); // 'portfolio' or 'blog'
   const [resumeData, setResumeData] = useState(null);
   const [blogs, setBlogs] = useState([]);
@@ -20,13 +22,13 @@ export default function App() {
         setLoading(true);
 
         // Fetch resume
-        const resumeRes = await fetch('/api/resume');
+        const resumeRes = await fetch(apiUrl('/api/resume'));
         if (!resumeRes.ok) throw new Error('Failed to load resume details.');
         const resumeJson = await resumeRes.json();
         setResumeData(resumeJson);
 
         // Fetch blogs
-        const blogsRes = await fetch('/api/blogs');
+        const blogsRes = await fetch(apiUrl('/api/blogs'));
         if (!blogsRes.ok) throw new Error('Failed to load blog posts.');
         const blogsJson = await blogsRes.json();
         setBlogs(blogsJson);
