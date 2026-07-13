@@ -271,7 +271,7 @@ export default function App() {
         <div style={{ display: 'flex', alignItems: 'center', margin: '4rem 0 2rem' }}>
           <div style={{ flexGrow: 1, height: '1.5px', backgroundColor: '#000' }} />
           <span style={{ padding: '0 1.5rem', fontSize: '0.75rem', letterSpacing: '0.25em', fontWeight: 'bold', textAlign: 'center' }} className="mono">
-            STRICT MONOCHROME EDITORIAL WORKPLACE
+           By MrPTNM - A Personal Portfolio & Blog
           </span>
           <div style={{ flexGrow: 1, height: '1.5px', backgroundColor: '#000' }} />
         </div>
