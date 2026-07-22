@@ -5,38 +5,70 @@ import BlogSection from './components/BlogSection';
 import ResumeSection from './components/ResumeSection';
 import ResumeCard from './components/ResumeCard';
 import SkillsGrid from './components/SkillsGrid';
+import { fetchResumeFromFirebase, fetchBlogsFromFirebase } from './firebase';
+
+const apiBase = (import.meta.env.VITE_API_URL || 'https://spidy-web-backend.onrender.com').replace(/\/$/, '');
+const apiUrl = (path) => `${apiBase}${path}`;
 
 export default function App() {
-  const apiBase = (import.meta.env.VITE_API_URL || 'https://spidy-web-backend.onrender.com').replace(/\/$/, '');
-  const apiUrl = (path) => `${apiBase}${path}`;
   const [activeTab, setActiveTab] = useState('portfolio'); // 'portfolio' or 'blog'
   const [resumeData, setResumeData] = useState(null);
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isFirebaseFallback, setIsFirebaseFallback] = useState(false);
 
   // Fetch initial data
   useEffect(() => {
     async function initFetch() {
       try {
         setLoading(true);
+        let resumeFetched = null;
+        let blogsFetched = [];
+        let fallbackNeeded = false;
 
         // Fetch resume
-        const resumeRes = await fetch(apiUrl('/api/resume'));
-        if (!resumeRes.ok) throw new Error('Failed to load resume details.');
-        const resumeJson = await resumeRes.json();
-        setResumeData(resumeJson);
+        try {
+          const resumeRes = await fetch(apiUrl('/api/resume'));
+          if (!resumeRes.ok) throw new Error('Failed to load resume details.');
+          resumeFetched = await resumeRes.json();
+        } catch (err) {
+          console.warn('Backend resume fetch failed, attempting Firebase fallback:', err);
+          fallbackNeeded = true;
+        }
 
         // Fetch blogs
-        const blogsRes = await fetch(apiUrl('/api/blogs'));
-        if (!blogsRes.ok) throw new Error('Failed to load blog posts.');
-        const blogsJson = await blogsRes.json();
-        setBlogs(blogsJson);
+        try {
+          const blogsRes = await fetch(apiUrl('/api/blogs'));
+          if (!blogsRes.ok) throw new Error('Failed to load blog posts.');
+          blogsFetched = await blogsRes.json();
+        } catch (err) {
+          console.warn('Backend blogs fetch failed, attempting Firebase fallback:', err);
+          fallbackNeeded = true;
+        }
 
+        // Direct Firebase fallback
+        if (fallbackNeeded || !resumeFetched || blogsFetched.length === 0) {
+          console.info('Direct Firebase Firestore recovery active.');
+          if (!resumeFetched) {
+            resumeFetched = await fetchResumeFromFirebase();
+          }
+          if (blogsFetched.length === 0) {
+            blogsFetched = await fetchBlogsFromFirebase();
+          }
+          setIsFirebaseFallback(true);
+        }
+
+        setResumeData(resumeFetched);
+        setBlogs(blogsFetched);
         setError(null);
       } catch (err) {
         console.error('Fetch error:', err);
-        setError('Failed to fetch data from the server.');
+        if (err && (err.code === 'permission-denied' || (err.message && err.message.toLowerCase().includes('permission')))) {
+          setError('Firebase Firestore access denied. Please configure your Firestore Security Rules to allow public read access for the "resume" and "blogs" collections.');
+        } else {
+          setError('Failed to fetch data from the server or direct cloud sync.');
+        }
       } finally {
         setLoading(false);
       }
@@ -49,9 +81,35 @@ export default function App() {
     <div>
       {/* Navigation Header */}
       <nav className="site-nav">
-        <a href="/" className="site-logo mono" onClick={(e) => { e.preventDefault(); setActiveTab('portfolio'); }}>
-          PRANAVA THEJASWI
-        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <a href="/" className="site-logo mono" onClick={(e) => { e.preventDefault(); setActiveTab('portfolio'); }}>
+            PRANAVA THEJASWI
+          </a>
+          {isFirebaseFallback && (
+            <div className="mono" style={{
+              fontSize: '0.7rem',
+              border: '1px solid var(--color-black)',
+              padding: '0.15rem 0.45rem',
+              fontWeight: 'bold',
+              letterSpacing: '0.05em',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              backgroundColor: 'var(--color-black)',
+              color: 'var(--color-white)',
+              borderRadius: '2px'
+            }}>
+              <span className="pulse-dot" style={{ 
+                display: 'inline-block', 
+                width: '6px', 
+                height: '6px', 
+                backgroundColor: 'var(--color-white)', 
+                borderRadius: '50%'
+              }} />
+              CLOUD RECOVERY ACTIVE
+            </div>
+          )}
+        </div>
         <div className="nav-links">
           <button 
             className={`nav-btn ${activeTab === 'portfolio' ? 'active' : ''}`} 

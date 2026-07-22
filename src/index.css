@@ -653,3 +653,17 @@ textarea.form-control {
   }
 }
 
+@keyframes pulse {
+  0% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.pulse-dot {
+  animation: pulse 1s infinite alternate;
+}
+
+
